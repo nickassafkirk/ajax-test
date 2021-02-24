@@ -1,10 +1,9 @@
-const baseURL = "https://ci-swapi.herokuapp.com/api/";
 
-function getData(type, cb){
+function getData(url, cb){
     let xhr = new XMLHttpRequest();
 // XMLHttpRequest() is an inbuilt object that JS provides that allows us to consume APIs
 
-xhr.open("GET", baseURL + type + "/");
+xhr.open("GET", url);
 
 xhr.send();
 
@@ -30,12 +29,28 @@ function getTableHeaders(obj) {
     return `<tr>${tableHeaders}</tr>`
 }
 
-function writeToDocument(type){
+function generatePaginationButtons(next, prev) {
+    if (next && prev) {
+        return `<button onclick="writeToDocument('${prev}')">Prev</button>
+                <button onclick="writeToDocument('${next}')">Next</button>` 
+    } else if (next && !prev){ 
+        return `<button onclick="writeToDocument('${next}')">Next</button>`
+    } else if (!next && prev) {
+        return `<button onclick="writeToDocument('${prev}')">Prev</button>`
+    } 
+}
+
+function writeToDocument(url){
     let tableRows = [];
     let el = document.getElementById("data");
     el.innerHTML = " "; //empty string is added eachg time the button is clicked to stop each group of ten items adding to the bottom of the page
     
-    getData(type, function(data){
+    getData(url, function(data){
+
+        if(data.next || data.previous){
+            var pagination;
+            pagination = generatePaginationButtons(data.next, data.previous);
+        }
         data = data.results;
         let tableHeaders = getTableHeaders(data[0]);
         
@@ -50,6 +65,10 @@ function writeToDocument(type){
            tableRows.push(`<tr>${dataRow}</tr>`);
         });
 
-        el.innerHTML = `<table>${tableHeaders}${tableRows}</table>`
+        el.innerHTML = `<table>${tableHeaders}${tableRows}</table>${pagination}`.replace(/,/g,""); //regular expression is used to find all commas and replace
+        // them with emoty strings. 
+        //regular expressions search for something and then allow us to replace this search with something else. /,/ is what we're searching for. 
+        // g means to find all instances of the searched term
+        // the string after the , (comma) is the replacement content
     });
 }
